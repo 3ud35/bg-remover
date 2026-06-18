@@ -1,0 +1,24 @@
+[project]
+name = "bgremove"
+version = "0.1.0"
+dependencies = [
+  "typer",
+  "rich",
+  "pillow",
+  "numpy",
+  "opencv-python",
+  "torch",
+  "torchvision",
+  "transformers",
+  "huggingface-hub",
+  "pydantic",
+  "einops",
+  "kornia",
+  "timm"
+]
+
+[project.scripts]
+bgremove = "bgremove.cli:app"
+
+[tool.setuptools.packages.find]
+include = ["bgremove*"]
