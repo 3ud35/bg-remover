@@ -8,19 +8,23 @@ Ce document centralise les tâches et la vision stratégique pour l'évolution d
 Transformer l'outil CLI actuel en une application "Zero-Install" (portable) dotée d'une interface graphique, permettant une utilisation simple sans connaissances techniques (Python, Terminal, etc.).
 
 ### 🏗️ Architecture & Confinement
-- [ ] **Détection de l'environnement** : Implémenter la logique `sys.frozen` pour identifier si l'app tourne en mode script ou compilé.
-- [ ] **Isolation des ressources** : Créer un dossier `models_cache` au sein du répertoire de l'application pour stocker les poids BiRefNet.
-- [ ] **Gestion des variables d'environnement** : Forcer `HF_HOME` et les caches de modèles vers le dossier local de l'app pour éviter de polluer le système de l'utilisateur.
+- [x] **Détection de l'environnement** : Implémenter la logique `sys.frozen` pour identifier si l'app tourne en mode script ou compilé.
+- [x] **Isolation des ressources** : Créer un dossier `internal_models` au sein du répertoire de l'application.
+- [x] **Gestion des variables d'environnement** : Forcer `HF_HOME`, `TORCH_HOME` vers le dossier local de l'app.
+- [x] **Analyse Intelligente** : Détection automatique de la complexité (cheveux/poils) et du contraste.
+- [x] **Raffinement Matting** : Intégration du Guided Filter pour les détails fins.
 
 ### 🎨 Interface Graphique (GUI)
-- [ ] **Intégration Gradio** : Développer une interface simple avec `gr.Blocks`.
-    - [ ] Sélecteur de fichier (FilePicker).
-    - [ ] Prévisualisation Avant/Après.
-    - [ ] Choix du mode de qualité (Standard/High/Pro).
-- [ ] **Système de Diagnostic** : Afficher une barre de progression claire lors du premier téléchargement des modèles (plusieurs Go).
+- [x] **Intégration Gradio** : Développer une interface simple avec `gr.Blocks`.
+    - [x] Sélecteur de fichier.
+    - [x] Prévisualisation du résultat.
+    - [x] Choix du mode de qualité.
+    - [x] Gestion des ombres portées et des fonds personnalisés.
+- [ ] **Système de Diagnostic** : Améliorer le feedback lors du premier téléchargement des modèles (plusieurs Go).
 
 ### 📦 Packaging & Distribution (PyInstaller)
 - [ ] **Configuration PyInstaller** : Créer un fichier `.spec` optimisé pour `--onedir`.
+- [ ] **Inclusion des dépendances non-Python** : S'assurer que `cv2` et `torch` sont bien packagés.
 - [ ] **Stratégie Multi-OS** :
     - [ ] **Windows** : Sortie `.zip` avec exécutable `.exe`.
     - [ ] **macOS** : Bundle `.app` (signature/notarisation à prévoir).
@@ -59,7 +63,14 @@ os.environ["HF_HOME"] = MODELS_DIR
 
 ---
 
-## ✅ Tâches Immédiates
-- [ ] Créer un prototype `bgremove/gui.py`.
-- [ ] Tester le téléchargement conditionnel des modèles dans un dossier arbitraire.
-- [ ] Valider une première compilation `pyinstaller` sur Linux.
+## ✅ Tâches Complétées
+- [x] Créer un prototype `bgremove/gui.py` fonctionnel.
+- [x] Implémenter la logique de confinement dans `bgremove/utils/config.py`.
+- [x] Ajouter le support Batch et les options d'ombres dans le CLI.
+- [x] Automatiser la configuration du `build-system` dans `pyproject.toml`.
+
+## 🛠️ Prochaines Étapes Prioritaires
+- [ ] Créer le fichier `bgremove.spec` pour PyInstaller.
+- [ ] Tester le lancement de l'exécutable sur une machine vierge (sans Python).
+- [ ] Ajouter un modèle de fallback (ex: IS-Net) pour les cas de faible contraste.
+- [ ] Intégrer un système de log plus robuste pour le débug utilisateur.

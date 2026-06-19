@@ -5,21 +5,20 @@
 
 <img src="readmeai/assets/logos/purple.svg" width="30%" style="position: absolute; top: 0; right: 0;" alt="Project Logo"/>
 
-# <code>BG-REMOVER-CLI</code>
+# <code>bgremove</code>
 
-*A high-performance CLI tool for professional-grade background removal.*
+*Powerful, Zero-Install Background Removal with CLI and GUI.*
 
 <!-- BADGES -->
 <!-- local repository, no metadata badges. -->
 
-<em>Built with the tools and technologies:</em>
+<em>Built with professional-grade tools:</em>
 
+<img src="https://img.shields.io/badge/Gradio-FFBB00.svg?style=flat-square&logo=Gradio&logoColor=black" alt="Gradio">
+<img src="https://img.shields.io/badge/PyTorch-EE4C2C.svg?style=flat-square&logo=PyTorch&logoColor=white" alt="PyTorch">
 <img src="https://img.shields.io/badge/Typer-000000.svg?style=flat-square&logo=Typer&logoColor=white" alt="Typer">
-<img src="https://img.shields.io/badge/TOML-9C4121.svg?style=flat-square&logo=TOML&logoColor=white" alt="TOML">
-<img src="https://img.shields.io/badge/Rich-FAE742.svg?style=flat-square&logo=Rich&logoColor=black" alt="Rich">
-<img src="https://img.shields.io/badge/NumPy-013243.svg?style=flat-square&logo=NumPy&logoColor=white" alt="NumPy">
+<img src="https://img.shields.io/badge/OpenCV-5C3EE8.svg?style=flat-square&logo=OpenCV&logoColor=white" alt="OpenCV">
 <img src="https://img.shields.io/badge/Python-3776AB.svg?style=flat-square&logo=Python&logoColor=white" alt="Python">
-<img src="https://img.shields.io/badge/Pydantic-E92063.svg?style=flat-square&logo=Pydantic&logoColor=white" alt="Pydantic">
 
 </div>
 </div>
@@ -28,40 +27,78 @@
 
 ---
 
-## 🌈 Table of Contents
-
-🌈 [Table of Contents](#-table-of-contents)  
-🔴 [Overview](#-overview)  
-🟠 [Features](#-features)  
-🟡 [Project Structure](#-project-structure)  
-&nbsp;&nbsp;&nbsp;&nbsp;🟢 [Project Index](#-project-index)  
-🔵 [Getting Started](#-getting-started)  
-&nbsp;&nbsp;&nbsp;&nbsp;🟣 [Prerequisites](#-prerequisites)  
-&nbsp;&nbsp;&nbsp;&nbsp;⚫ [Installation](#-installation)  
-&nbsp;&nbsp;&nbsp;&nbsp;⚪ [Usage](#-usage)  
-&nbsp;&nbsp;&nbsp;&nbsp;🟤 [Testing](#-testing)  
-🌟 [Roadmap](#-roadmap)  
-🤝 [Contributing](#-contributing)  
-📜 [License](#-license)  
-✨ [Acknowledgments](#-acknowledgments)
-
----
-
 ## 🔴 Overview
 
-`bg-remover-cli` is a powerful command-line utility designed for automated, high-quality background removal from images. It leverages the state-of-the-art **BiRefNet** model to provide studio-quality results directly from your terminal. 
+`bgremove` is a high-performance background removal tool designed to be **completely portable and autonomous**. It leverages the state-of-the-art **BiRefNet** model combined with **Guided Filter Matting** to provide studio-quality results for both objects and complex subjects like hair or fur.
 
-The project is built with a "Commercial-First" mindset, using the **MIT-licensed** BiRefNet engine to ensure that developers and businesses can safely integrate high-resolution background removal into their production workflows without licensing headaches.
+Whether you are a developer looking for a scriptable CLI or a user needing a simple drag-and-drop interface, `bgremove` handles everything—including automatic environment setup and local model confinement.
 
 ---
 
 ## 🟠 Features
 
-*   **Pro-Level Accuracy**: Native integration with **BiRefNet** for superior edge detection on hair, fur, and complex backgrounds.
-*   **Commercial Friendly**: 100% open-source and permissive licensing (MIT).
-*   **Quality Modes**: Choose between `standard`, `high`, and `pro` quality levels to balance speed and precision.
-*   **Debug & Reporting**: Built-in `--debug` and `--report` flags to inspect intermediate masks and processing metrics.
-*   **Developer Friendly**: Built with `Typer` and `Pydantic` for a robust, type-safe CLI experience.
+*   **🚀 Zero-Install Ready**: Designed for portability. All models and caches are stored locally in the application folder (`internal_models`), ensuring a "clean" installation.
+*   **🎨 Pro UI**: Full-featured **Gradio** interface for interactive processing with real-time previews.
+*   **🔍 Intelligent Analysis**: Automatically detects image complexity (hair, low contrast, extreme lighting) to apply specialized refinement strategies.
+*   **✂️ Guided Filter Matting**: Professional-grade alpha refinement that recovers fine details around hair and complex edges.
+*   **🌑 Advanced Shadows**: Built-in support for realistic `drop` and `soft` shadows.
+*   **📦 Batch Processing**: Command-line support for processing entire folders with progress tracking.
+*   **⚡ Multiple Qualities**: Modes ranging from `fast` to `max` to balance speed and pixel-perfection.
+
+---
+
+## 🔵 Getting Started
+
+### 🟣 Prerequisites
+
+*   **Python 3.10+** (if running from source)
+*   **CUDA** (optional, for ultra-fast GPU processing)
+
+### ⚫ Installation (Source)
+
+```bash
+# Clone the repository
+git clone https://github.com/3ud35/bg-remover.git
+cd bg-remover
+
+# Create and activate environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install in editable mode
+pip install -e .
+```
+
+---
+
+## ⚪ Usage
+
+### 🖥️ GUI (Recommended)
+Launch the interactive web interface:
+```bash
+bgremove-gui
+```
+
+### ⌨️ CLI
+Remove background from a single image:
+```bash
+bgremove myimage.jpg --quality pro --shadow drop
+```
+
+Process a whole folder (Batch mode):
+```bash
+bgremove ./input_folder --batch --out ./output_folder --preview
+```
+
+---
+
+## 🌟 Roadmap
+
+*   [x] **Logic Confinement**: Isolated `internal_models` storage.
+*   [x] **Gradio GUI**: Interactive drag-and-drop interface.
+*   [x] **Advanced Matting**: Guided Filter implementation.
+*   [ ] **PyInstaller Packaging**: Standalone executables for Win/Mac/Linux.
+*   [ ] **Secondary Model**: Fallback to IS-Net for low-contrast cases.
 
 ---
 

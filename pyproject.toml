@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "bgremove"
 version = "0.1.0"
@@ -14,11 +18,13 @@ dependencies = [
   "pydantic",
   "einops",
   "kornia",
-  "timm"
+  "timm",
+  "gradio"
 ]
 
 [project.scripts]
 bgremove = "bgremove.cli:app"
+bgremove-gui = "bgremove.gui:launch_gui"
 
 [tool.setuptools.packages.find]
 include = ["bgremove*"]

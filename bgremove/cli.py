@@ -1,6 +1,12 @@
 import typer
 from pathlib import Path
 from typing import Optional
+from bgremove.utils.config import setup_portable_environment
+
+# Configure environment before anything else
+# This must happen before importing any library that uses torch/transformers
+MODELS_DIR, CACHE_DIR = setup_portable_environment()
+
 from bgremove.api.service import remove_background
 
 app = typer.Typer(help="Production Background Remover CLI")
@@ -68,10 +74,38 @@ def main(
 
     if not resolved_input.exists():
         _exit_with(f"Error: Input path {resolved_input} does not exist.")
-    if resolved_input.is_dir() and not batch:
-        _exit_with("Error: Input is a directory. Use --batch to process directories.")
     if batch:
-        _exit_with("Batch mode not fully implemented yet.", color=typer.colors.YELLOW, code=0)
+        input_dir = resolved_input
+        if not input_dir.is_dir():
+            _exit_with(f"Error: {input_dir} is not a directory.")
+
+        images = _list_download_images(input_dir)
+        if not images:
+            _exit_with(f"No images found in {input_dir}")
+
+        typer.secho(f"Processing {len(images)} images in batch mode...", fg=typer.colors.CYAN)
+
+        with typer.progressbar(images, label="Processing") as progress:
+            for image_p in progress:
+                try:
+                    remove_background(
+                        image_path=image_p,
+                        output_path=None,  # Auto-generate name
+                        quality=quality,
+                        background=background,
+                        shadow=shadow,
+                        preview=preview,
+                        debug=debug,
+                        report=report,
+                        device=device,
+                        format=format,
+                        force_model=force_model,
+                    )
+                except Exception as e:
+                    typer.secho(f"\nError processing {image_p.name}: {e}", fg=typer.colors.RED)
+
+        typer.secho("\nBatch processing complete!", fg=typer.colors.GREEN)
+        raise typer.Exit(0)
 
     try:
         result = remove_background(
