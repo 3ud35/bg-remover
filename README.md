@@ -1,353 +1,132 @@
-<div id="top">
+# bgremove
 
-<!-- HEADER STYLE: MODERN -->
-<div align="left" style="position: relative; width: 100%; height: 100%; ">
+Portable background removal tool, CLI and GUI, powered by BiRefNet and Guided Filter Matting.
 
-<img src="readmeai/assets/logos/purple.svg" width="30%" style="position: absolute; top: 0; right: 0;" alt="Project Logo"/>
+![Python](https://img.shields.io/badge/Python-3776AB.svg?style=flat-square&logo=Python&logoColor=white)
+![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C.svg?style=flat-square&logo=PyTorch&logoColor=white)
+![Gradio](https://img.shields.io/badge/Gradio-FFBB00.svg?style=flat-square&logo=Gradio&logoColor=black)
+![Typer](https://img.shields.io/badge/Typer-000000.svg?style=flat-square&logo=Typer&logoColor=white)
+![OpenCV](https://img.shields.io/badge/OpenCV-5C3EE8.svg?style=flat-square&logo=OpenCV&logoColor=white)
 
-# <code>bgremove</code>
+This project started as a fork of [johneadams88/bg-remover-cli](https://github.com/johneadams88/bg-remover-cli) and has since diverged into a self-contained tool with a Gradio GUI, portable model storage, and an image-analysis driven refinement pipeline.
 
-*Powerful, Zero-Install Background Removal with CLI and GUI.*
+## Overview
 
-<!-- BADGES -->
-<!-- local repository, no metadata badges. -->
+`bgremove` removes backgrounds from images using the **BiRefNet** segmentation model, then refines the resulting alpha mask with **Guided Filter Matting** to recover fine detail around hair and complex edges. It runs either from the command line or through a local Gradio web interface, and keeps all downloaded model weights inside the project folder (`internal_models/`) instead of the user's home directory.
 
-<em>Built with professional-grade tools:</em>
+## Features
 
-<img src="https://img.shields.io/badge/Gradio-FFBB00.svg?style=flat-square&logo=Gradio&logoColor=black" alt="Gradio">
-<img src="https://img.shields.io/badge/PyTorch-EE4C2C.svg?style=flat-square&logo=PyTorch&logoColor=white" alt="PyTorch">
-<img src="https://img.shields.io/badge/Typer-000000.svg?style=flat-square&logo=Typer&logoColor=white" alt="Typer">
-<img src="https://img.shields.io/badge/OpenCV-5C3EE8.svg?style=flat-square&logo=OpenCV&logoColor=white" alt="OpenCV">
-<img src="https://img.shields.io/badge/Python-3776AB.svg?style=flat-square&logo=Python&logoColor=white" alt="Python">
+- **Portable model storage**: model weights and the Hugging Face cache live under `internal_models/`, isolated from the system-wide cache.
+- **Gradio GUI**: drag-and-drop interface with live preview, served locally via `bgremove-gui`.
+- **Image analysis**: inspects each image (hair, low contrast, extreme lighting) to pick a refinement strategy before running the model.
+- **Guided Filter Matting**: alpha refinement pass tuned for hair/fur edges (`processing/matting.py`).
+- **Quality scoring with automatic re-run**: if the initial alpha mask scores below threshold on quality/edge-confidence/halo-risk, the pipeline reprocesses with a fallback strategy (`pipeline.py`).
+- **Shadows**: optional `drop` or `soft` shadow compositing.
+- **Batch mode**: process a whole folder from the CLI with a progress bar.
 
-</div>
-</div>
+## Installation
 
-<br clear="right">
-
----
-
-## 🔴 Overview
-
-`bgremove` is a high-performance background removal tool designed to be **completely portable and autonomous**. It leverages the state-of-the-art **BiRefNet** model combined with **Guided Filter Matting** to provide studio-quality results for both objects and complex subjects like hair or fur.
-
-Whether you are a developer looking for a scriptable CLI or a user needing a simple drag-and-drop interface, `bgremove` handles everything—including automatic environment setup and local model confinement.
-
----
-
-## 🟠 Features
-
-*   **🚀 Zero-Install Ready**: Designed for portability. All models and caches are stored locally in the application folder (`internal_models`), ensuring a "clean" installation.
-*   **🎨 Pro UI**: Full-featured **Gradio** interface for interactive processing with real-time previews.
-*   **🔍 Intelligent Analysis**: Automatically detects image complexity (hair, low contrast, extreme lighting) to apply specialized refinement strategies.
-*   **✂️ Guided Filter Matting**: Professional-grade alpha refinement that recovers fine details around hair and complex edges.
-*   **🌑 Advanced Shadows**: Built-in support for realistic `drop` and `soft` shadows.
-*   **📦 Batch Processing**: Command-line support for processing entire folders with progress tracking.
-*   **⚡ Multiple Qualities**: Modes ranging from `fast` to `max` to balance speed and pixel-perfection.
-
----
-
-## 🔵 Getting Started
-
-### 🟣 Prerequisites
-
-*   **Python 3.10+** (if running from source)
-*   **CUDA** (optional, for ultra-fast GPU processing)
-
-### ⚫ Installation (Source)
+Requires Python 3.10+. A CUDA-capable GPU is optional but recommended for `pro`/`max` quality.
 
 ```bash
-# Clone the repository
 git clone https://github.com/3ud35/bg-remover.git
 cd bg-remover
 
-# Create and activate environment
 python3 -m venv .venv
 source .venv/bin/activate
 
-# Install in editable mode
 pip install -e .
 ```
 
----
+On first run, `bgremove` downloads the BiRefNet weights from Hugging Face into `internal_models/` (roughly 400 MB).
 
-## ⚪ Usage
+## Usage
 
-### 🖥️ GUI (Recommended)
-Launch the interactive web interface:
+### GUI
+
 ```bash
 bgremove-gui
 ```
 
-### ⌨️ CLI
-Remove background from a single image:
+Opens a local Gradio interface to upload an image, pick quality/background/shadow/format, and download the result.
+
+### CLI
+
 ```bash
-bgremove myimage.jpg --quality pro --shadow drop
+bgremove path/to/image.png --quality pro --shadow drop
 ```
 
-Process a whole folder (Batch mode):
+Batch mode processes every image in a folder:
+
 ```bash
 bgremove ./input_folder --batch --out ./output_folder --preview
 ```
 
----
+### CLI options
 
-## 🌟 Roadmap
+| Option | Default | Description |
+| --- | --- | --- |
+| `input_path` | — | Path to an image or, with `--batch`, a folder |
+| `--out` | auto | Output file path (single image mode) |
+| `--quality` | `pro` | `fast` / `balanced` / `pro` / `max` |
+| `--background` | `transparent` | `transparent`, a named color, or a hex code (`#f0f0f0`) |
+| `--shadow` | `auto` | `none` / `drop` / `soft` / `auto` |
+| `--batch` | off | Treat `input_path` as a folder and process every image in it |
+| `--preview` | off | Save a before/after preview image |
+| `--debug` | off | Save intermediate masks (raw alpha, refined alpha) |
+| `--report` | off | Save a JSON quality report |
+| `--format` | `png` | Output image format |
+| `--device` | `auto` | `auto` / `cpu` / `cuda` |
 
-*   [x] **Logic Confinement**: Isolated `internal_models` storage.
-*   [x] **Gradio GUI**: Interactive drag-and-drop interface.
-*   [x] **Advanced Matting**: Guided Filter implementation.
-*   [ ] **PyInstaller Packaging**: Standalone executables for Win/Mac/Linux.
-*   [ ] **Secondary Model**: Fallback to IS-Net for low-contrast cases.
+## Project structure
 
----
-
-## 🟡 Project Structure
-
-```sh
-└── bg-remover-cli/
-    ├── README.md
-    ├── bgremove
-    │   ├── __init__.py
-    │   ├── api
-    │   ├── cli.py
-    │   ├── io
-    │   ├── models
-    │   ├── pipeline.py
-    │   ├── processing
-    │   ├── result.py
-    │   └── utils
-    ├── docs
-    │   ├── product-requirements-document.md
-    │   └── step-by-step-build-plan.md
-    ├── pyproject.toml
-    └── tests
-        └── __init__.py
+```
+bgremove/
+├── cli.py               # Typer CLI entry point
+├── gui.py                # Gradio GUI entry point
+├── pipeline.py           # Orchestrates analysis, model inference, refinement, fallback
+├── result.py             # Result dataclasses
+├── api/
+│   └── service.py        # High-level remove_background() API
+├── io/
+│   ├── reader.py          # Image loading
+│   └── writer.py          # Output saving
+├── models/
+│   ├── base.py             # Model interface
+│   ├── birefnet.py         # BiRefNet inference wrapper
+│   └── registry.py         # Model lookup/instantiation
+├── processing/
+│   ├── qa.py                # Image analysis, strategy selection, quality scoring
+│   ├── matting.py           # Guided filter alpha refinement
+│   ├── alpha.py              # Alpha channel utilities
+│   ├── edges.py               # Edge detection helpers
+│   └── compose.py             # Background/shadow compositing
+└── utils/
+    └── config.py            # Portable model/cache directory setup
 ```
 
-### 🟢 Project Index
+## Roadmap
 
-<details open>
-	<summary><b><code>/</code></b></summary>
-	<!-- __root__ Submodule -->
-	<details>
-		<summary><b>Root Files</b></summary>
-		<blockquote>
-			<table>
-			<thead>
-				<tr style='border-bottom: 1px solid #eee;'>
-					<th style='padding: 8px; text-align: left;'>File</th>
-					<th style='padding: 8px; text-align: left;'>Summary</th>
-				</tr>
-			</thead>
-				<tr style='border-bottom: 1px solid #eee;'>
-					<td style='padding: 8px;'><b><a href='/pyproject.toml'>pyproject.toml</a></b></td>
-					<td style='padding: 8px;'>Core project configuration and metadata.</td>
-				</tr>
-			</table>
-		</blockquote>
-	</details>
-	<!-- bgremove Submodule -->
-	<details>
-		<summary><b>bgremove</b></summary>
-		<blockquote>
-			<table>
-			<thead>
-				<tr style='border-bottom: 1px solid #eee;'>
-					<th style='padding: 8px; text-align: left;'>File</th>
-					<th style='padding: 8px; text-align: left;'>Summary</th>
-				</tr>
-			</thead>
-				<tr style='border-bottom: 1px solid #eee;'>
-					<td style='padding: 8px;'><b><a href='/bgremove/result.py'>result.py</a></b></td>
-					<td style='padding: 8px;'>Image processing result classes and data structures.</td>
-				</tr>
-				<tr style='border-bottom: 1px solid #eee;'>
-					<td style='padding: 8px;'><b><a href='/bgremove/cli.py'>cli.py</a></b></td>
-					<td style='padding: 8px;'>Main CLI entry point and command-line argument handling.</td>
-				</tr>
-				<tr style='border-bottom: 1px solid #eee;'>
-					<td style='padding: 8px;'><b><a href='/bgremove/pipeline.py'>pipeline.py</a></b></td>
-					<td style='padding: 8px;'>Orchestrates the image processing workflow and model selection.</td>
-				</tr>
-			</table>
-			<!-- processing Submodule -->
-			<details>
-				<summary><b>processing</b></summary>
-				<blockquote>
-					<table>
-					<thead>
-						<tr style='border-bottom: 1px solid #eee;'>
-							<th style='padding: 8px; text-align: left;'>File</th>
-							<th style='padding: 8px; text-align: left;'>Summary</th>
-						</tr>
-					</thead>
-						<tr style='border-bottom: 1px solid #eee;'>
-							<td style='padding: 8px;'><b><a href='/bgremove/processing/compose.py'>compose.py</a></b></td>
-							<td style='padding: 8px;'>Handles alpha compositing and background replacement.</td>
-						</tr>
-						<tr style='border-bottom: 1px solid #eee;'>
-							<td style='padding: 8px;'><b><a href='/bgremove/processing/edges.py'>edges.py</a></b></td>
-							<td style='padding: 8px;'>Edge detection and alpha mask refinement logic.</td>
-						</tr>
-						<tr style='border-bottom: 1px solid #eee;'>
-							<td style='padding: 8px;'><b><a href='/bgremove/processing/matting.py'>matting.py</a></b></td>
-							<td style='padding: 8px;'>Soft matting and transparency processing.</td>
-						</tr>
-						<tr style='border-bottom: 1px solid #eee;'>
-							<td style='padding: 8px;'><b><a href='/bgremove/processing/alpha.py'>alpha.py</a></b></td>
-							<td style='padding: 8px;'>Alpha channel generation and manipulation.</td>
-						</tr>
-						<tr style='border-bottom: 1px solid #eee;'>
-							<td style='padding: 8px;'><b><a href='/bgremove/processing/qa.py'>qa.py</a></b></td>
-							<td style='padding: 8px;'>Quality assurance metrics and model strategy selection.</td>
-						</tr>
-					</table>
-				</blockquote>
-			</details>
-			<!-- io Submodule -->
-			<details>
-				<summary><b>io</b></summary>
-				<blockquote>
-					<table>
-					<thead>
-						<tr style='border-bottom: 1px solid #eee;'>
-							<th style='padding: 8px; text-align: left;'>File</th>
-							<th style='padding: 8px; text-align: left;'>Summary</th>
-						</tr>
-					</thead>
-						<tr style='border-bottom: 1px solid #eee;'>
-							<td style='padding: 8px;'><b><a href='/bgremove/io/reader.py'>reader.py</a></b></td>
-							<td style='padding: 8px;'>Image loading and preprocessing utilities.</td>
-						</tr>
-						<tr style='border-bottom: 1px solid #eee;'>
-							<td style='padding: 8px;'><b><a href='/bgremove/io/writer.py'>writer.py</a></b></td>
-							<td style='padding: 8px;'>Output saving and export management.</td>
-						</tr>
-					</table>
-				</blockquote>
-			</details>
-			<!-- models Submodule -->
-			<details>
-				<summary><b>models</b></summary>
-				<blockquote>
-					<table>
-					<thead>
-						<tr style='border-bottom: 1px solid #eee;'>
-							<th style='padding: 8px; text-align: left;'>File</th>
-							<th style='padding: 8px; text-align: left;'>Summary</th>
-						</tr>
-					</thead>
-						<tr style='border-bottom: 1px solid #eee;'>
-							<td style='padding: 8px;'><b><a href='/bgremove/models/registry.py'>registry.py</a></b></td>
-							<td style='padding: 8px;'>Dynamic model registration and loading factory.</td>
-						</tr>
-						<tr style='border-bottom: 1px solid #eee;'>
-							<td style='padding: 8px;'><b><a href='/bgremove/models/birefnet.py'>birefnet.py</a></b></td>
-							<td style='padding: 8px;'>BiRefNet model implementation and inference wrapper.</td>
-						</tr>
-						<tr style='border-bottom: 1px solid #eee;'>
-							<td style='padding: 8px;'><b><a href='/bgremove/models/base.py'>base.py</a></b></td>
-							<td style='padding: 8px;'>Base classes for image segmentation models.</td>
-						</tr>
-					</table>
-				</blockquote>
-			</details>
-		</blockquote>
-	</details>
-</details>
+- [x] BiRefNet as the primary segmentation model
+- [x] Portable model storage (`internal_models/`)
+- [x] Gradio GUI
+- [x] Guided Filter Matting refinement
+- [ ] Secondary model (IS-Net) as a real fallback for low-contrast cases
+- [ ] PyInstaller packaging for standalone Win/Mac/Linux executables
+- [ ] Video background removal
 
----
+## Testing
 
-## 🔵 Getting Started
-
-### 🟣 Prerequisites
-
-*   **Python 3.10+**
-*   **NVIDIA GPU** (Recommended for "pro" quality performance)
-*   **FFmpeg** (Optional, for advanced compositing)
-
-### ⚫ Installation
-
-1. **Clone the repository:**
-    ```sh
-    git clone https://github.com/Fr0z3nRebel/bg-remover-cli.git
-    ```
-
-2. **Navigate to the project directory:**
-    ```sh
-    cd bg-remover-cli
-    ```
-
-3. **Install the dependencies:**
-    ```sh
-    pip install -e .
-    ```
-
-### ⚪ Usage
-
-Run the project with:
-```sh
-bgremove path/to/your/image.png --quality pro --debug --report
-```
-
-### 🟤 Testing
-
-This project uses `pytest`. Run the test suite with:
-```sh
+```bash
 pytest
 ```
 
----
+## Acknowledgments
 
-## 🌟 Roadmap
+- [johneadams88/bg-remover-cli](https://github.com/johneadams88/bg-remover-cli) — the original project this repository was forked from.
+- [BiRefNet](https://github.com/ZhengPeng7/BiRefNet) — the segmentation model used for background removal.
+- [Hugging Face](https://huggingface.co/) — hosts and serves the model weights.
 
-- [X] **`Task 1`**: Integrate BiRefNet as primary commercial-friendly model.
-- [ ] **`Task 2`**: Implement batch processing mode.
-- [ ] **`Task 3`**: Add support for video background removal.
-- [ ] **`Task 4`**: Vers une application portable autonome (voir [TODO.md](TODO.md)).
+## License
 
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Whether it's a bug report, a new feature, or a documentation fix, we value your help.
-
-1. **Fork the Repository**: Create your own copy of the project.
-2. **Clone Locally**: `git clone https://github.com/Fr0z3nRebel/bg-remover-cli.git`
-3. **Create a Branch**: `git checkout -b feature/my-new-feature`
-4. **Commit & Push**: Make your changes and push them to your fork.
-5. **Submit a PR**: Open a Pull Request against the main branch.
-
-- **💬 [Join the Discussions](https://github.com/Fr0z3nRebel/bg-remover-cli/discussions)**
-- **🐛 [Report Issues](https://github.com/Fr0z3nRebel/bg-remover-cli/issues)**
-- **💡 [Submit Pull Requests](https://github.com/Fr0z3nRebel/bg-remover-cli/pulls)**
-
----
-
-## 📜 License
-
-This project is protected under the **MIT License**. See the `LICENSE` file for details.
-
----
-
-## ✨ Acknowledgments
-
-- [BiRefNet](https://github.com/ZhengPeng7/BiRefNet) for the bilateral reference network for high-resolution background removal.
-- [Hugging Face](https://huggingface.co/) for providing the infrastructure to host and serve model weights.
-- [readme-ai](https://github.com/eli64s/readme-ai) for the automated README generation and structure.
-
----
-
-### 🛠️ Behind the Scenes
-Curious about how this was built or want to see more "Vibe Coding" projects? Check out the deep dive on [DevsPlsFix.com](https://devsplsfix.com).
-
-<div align="right">
-
-[![][back-to-top]](#top)
-
-</div>
-
-[back-to-top]: https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square
-
----
+MIT. See [LICENSE](LICENSE).
