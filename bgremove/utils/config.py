@@ -23,6 +23,10 @@ def setup_portable_environment():
     app_root = get_app_root()
     models_dir = app_root / "internal_models"
     cache_dir = models_dir / "cache"
+    shared = os.environ.get("HF_HUB_CACHE")
+    if shared and Path(shared).is_dir():
+        # Poids des modèles centralisés (voir ~/Code/alfred/ai-models) ; le reste reste local
+        cache_dir = Path(shared)
 
     # Create directories if they don't exist
     models_dir.mkdir(parents=True, exist_ok=True)
@@ -34,7 +38,7 @@ def setup_portable_environment():
     os.environ["TRANSFORMERS_CACHE"] = str(cache_dir)
 
     # Optionally isolate other potential home-based caches
-    os.environ["TORCH_HOME"] = str(models_dir / "torch")
+    os.environ.setdefault("TORCH_HOME", str(models_dir / "torch"))
 
     return models_dir, cache_dir
 
